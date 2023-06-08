@@ -1,6 +1,6 @@
 -- ****************************************************
 -- Ana Beatriz Kapps dos Reis - Matricula: 201835006
--- Rosa M. Ottoni Fernandes  - Matricula: -----
+-- Rosa M. Ottoni Fernandes  - Matricula: 202035506
 -- ****************************************************
 
 import qualified Data.Char as DC
@@ -9,11 +9,11 @@ import qualified Tabuleiro as Tb
 import System.Random (newStdGen)
 import System.IO
 
-data GameState  = Neutral | Invalid | Victory  deriving( Ord, Eq, Show )
+data EstadoJogo  = Neutro | Invalido | Vitoria  deriving( Ord, Eq, Show )
 
 data Controller = Controller { minas :: Int , marcados :: Int , abertos :: Int , tamTabuleiro :: Int , flag_invalido :: Bool }
 
-data Game = Game { tabuleiro :: Tb.Tabuleiro , controller :: Controller }
+data Jogo = Jogo { tabuleiro :: Tb.Tabuleiro , controller :: Controller }
 
 -- putStr :: String -> IO ()  
 -- putStr [] = return ()  
@@ -27,16 +27,16 @@ numberToInt [a,b]
     | otherwise = error "Entrada Inválida! <numberToInt>"
 numberToInt theError =  error "Entrada Inválida!"
 
-gameController :: Controller -> GameState
-gameController (Controller theMines theMarkeds theOpens theBoardSize theInvalid)
-    | theBoardSize - theOpens == theMines = Victory
-    | theInvalid = Invalid
-    | otherwise = Neutral
+jogoController :: Controller -> EstadoJogo
+jogoController (Controller theMines theMarkeds theOpens theBoardSize theInvalid)
+    | theBoardSize - theOpens == theMines = Vitoria
+    | theInvalid = Invalido
+    | otherwise = Neutro
 
-inputCommand :: Char -> Int -> Int -> Tb.Tabuleiro -> Controller -> Game
-inputCommand '+' i j (Tb.Tabuleiro bMatriz tamanhoLinha tamanhoColuna) (Controller a m b c d) = (Game (Tb.Tabuleiro (Tb.modificarMatriz '+' bMatriz i j ) tamanhoLinha tamanhoColuna) (Controller a (m+1) b c d) )
-inputCommand '-' i j (Tb.Tabuleiro bMatriz tamanhoLinha tamanhoColuna) (Controller a m b c d) = (Game (Tb.Tabuleiro (Tb.modificarMatriz '-' bMatriz i j ) tamanhoLinha tamanhoColuna) (Controller a (m-1) b c d) )
-inputCommand '_' i j (Tb.Tabuleiro bMatriz tamanhoLinha tamanhoColuna) (Controller a b o c d) = (Game (Tb.Tabuleiro (Tb.modificarMatriz '_' bMatriz i j ) tamanhoLinha tamanhoColuna) (Controller a b (o+1) c d) )
+inputCommand :: Char -> Int -> Int -> Tb.Tabuleiro -> Controller -> Jogo
+inputCommand '+' i j (Tb.Tabuleiro bMatriz tamanhoLinha tamanhoColuna) (Controller a m b c d) = (Jogo (Tb.Tabuleiro (Tb.modificarMatriz '+' bMatriz i j ) tamanhoLinha tamanhoColuna) (Controller a (m+1) b c d) )
+inputCommand '-' i j (Tb.Tabuleiro bMatriz tamanhoLinha tamanhoColuna) (Controller a m b c d) = (Jogo (Tb.Tabuleiro (Tb.modificarMatriz '-' bMatriz i j ) tamanhoLinha tamanhoColuna) (Controller a (m-1) b c d) )
+inputCommand '_' i j (Tb.Tabuleiro bMatriz tamanhoLinha tamanhoColuna) (Controller a b o c d) = (Jogo (Tb.Tabuleiro (Tb.modificarMatriz '_' bMatriz i j ) tamanhoLinha tamanhoColuna) (Controller a b (o+1) c d) )
 inputCommand  _  _ _  b c = error "Entrada Inválida!"
 
 -- INVERT LINE AND COLUMN TO FIND THE LINE FIRST
@@ -48,8 +48,8 @@ handleCommand (k:j:i) (Jogo bTabuleiro theController@(Controller a b c d e))
 handleCommand _ (Jogo bTabuleiro theController@(Controller a b c d e)) =
     Jogo bTabuleiro (Controller a b c d True)
 
-currentRound :: Game -> IO ()
-currentRound theGame@(Game bTabuleiro ctrler ) = do
+currentRound :: Jogo -> IO ()
+currentRound theGame@(Jogo bTabuleiro ctrler ) = do
     let currentBoard = Tb.mostrarTabuleiro bTabuleiro
     putStrLn " "
     putStrLn "  *** TABULEIRO *** "
@@ -57,8 +57,8 @@ currentRound theGame@(Game bTabuleiro ctrler ) = do
     putStrLn currentBoard
     putStr " Informe seu comando: "
     command <- getLine
-    let theGame'@(Game bTabuleiro' ctrler ) = handleCommand command theGame
-    if (gameController ctrler) == Invalid
+    let theGame'@(Jogo bTabuleiro' ctrler ) = handleCommand command theGame
+    if (jogoController ctrler) == Invalido
         then do
             putStrLn " "
             putStrLn " "
@@ -73,7 +73,7 @@ currentRound theGame@(Game bTabuleiro ctrler ) = do
             putStrLn " - <posição> => Desmarcar Posição Ex.:-D02, -C40 "
             putStrLn "---------------------------------------------------"
             currentRound theGame'
-    else if (gameController ctrler) == Victory
+    else if (jogoController ctrler) == Vitoria
         then do
             putStrLn " VOCÊ VENCEU! "
             return ()
@@ -141,7 +141,7 @@ start = do
                     putStrLn "---------------------------------------------------"
                     putStrLn " "
                     putStrLn " "
-                    currentRound (Game tabuleiro controller)
+                    currentRound (Jogo tabuleiro controller)
                     return ()
 
 main = do 

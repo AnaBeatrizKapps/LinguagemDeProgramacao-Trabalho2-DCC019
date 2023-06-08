@@ -1,6 +1,6 @@
 -- ****************************************************
 -- Ana Beatriz Kapps dos Reis - Matricula: 201835006
--- Rosa M. Ottoni Fernandes  - Matricula: -----
+-- Rosa M. Ottoni Fernandes  - Matricula: 202035506
 -- ****************************************************
 
 module Tabuleiro ( Tabuleiro(..) 
