@@ -40,14 +40,13 @@ inputCommand '_' i j (Tb.Tabuleiro bMatriz tamanhoLinha tamanhoColuna) (Controll
 inputCommand  _  _ _  b c = error "Entrada Inválida!"
 
 -- INVERT LINE AND COLUMN TO FIND THE LINE FIRST
-handleCommand :: String -> Game -> Game
-handleCommand (k:j:i) ( Game bTabuleiro theController@( Controller a b c d e ) )
-    | (k == '+' || k == '-' ||  k == '_' ) && (j <= 'z' && j >= 'a' || j <= 'Z' && j >= 'A') && (numberToInt i < 100) =
-        inputCommand k   ( numberToInt i  ) ((DC.digitToInt j) - (DC.digitToInt 'a')) bTabuleiro theController
-    -- | i == ""                && (k < 'z' && k > 'a' || k < 'Z' && k > 'A') && (numberToInt [j] < 100) = 
-    --     inputCommand '_' (DC.digitToInt j ) ((DC.digitToInt k) - (DC.digitToInt 'a')) bTabuleiro theController
-    | otherwise = ( Game bTabuleiro ( Controller a b c d True ) ) -- error ("Entrada Inválida! <handleCommand> k=" ++ [k] ++ "; j=" ++ [j] ++ "; i =" ++ [(DC.intToDigit (numberToInt i))] )
-handleCommand _ ( Game bTabuleiro theController@( Controller a b c d e ) ) = ( Game bTabuleiro ( Controller a b c d True ) )
+handleCommand :: String -> Jogo -> Jogo
+handleCommand (k:j:i) (Jogo bTabuleiro theController@(Controller a b c d e))
+    | (k == '+' || k == '-' || k == '_') && DC.isLower j && (numberToInt i < 100) =
+        inputCommand k (numberToInt i) (DC.ord j - DC.ord 'a') bTabuleiro theController
+    | otherwise = Jogo bTabuleiro (Controller a b c d True)
+handleCommand _ (Jogo bTabuleiro theController@(Controller a b c d e)) =
+    Jogo bTabuleiro (Controller a b c d True)
 
 currentRound :: Game -> IO ()
 currentRound theGame@(Game bTabuleiro ctrler ) = do
