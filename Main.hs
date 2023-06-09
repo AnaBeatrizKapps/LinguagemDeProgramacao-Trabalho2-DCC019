@@ -1,3 +1,4 @@
+data Jogo = Jogo { tabuleiro :: Tb.Tabuleiro , controller :: Controller }
 -- ****************************************************
 -- Ana Beatriz Kapps dos Reis - Matricula: 201835006
 -- Rosa M. Ottoni Fernandes  - Matricula: 202035506
