@@ -55,6 +55,7 @@ trataComando _ (Jogo tabuleiro controle@(Controle mi ma a t f)) =
 
 realizaJogada :: Jogo -> IO ()
 realizaJogada jogo@(Jogo tabuleiro controle) = do
+    -- Mostra tabuleiro e extrai o comando inserido pelo jogador
     let tabuleiroAtual = Tb.mostrarTabuleiro tabuleiro
     putStrLn " "
     putStrLn "  *** TABULEIRO *** "
@@ -63,6 +64,7 @@ realizaJogada jogo@(Jogo tabuleiro controle) = do
     putStr " Informe seu comando: "
     comando <- getLine
     let jogo'@(Jogo tabuleiro' controle) = trataComando comando jogo
+    -- Caso o comando inserido seja invalido, é solicitado ao usuário inserir um comando válido novamente
     if (jogoControle controle) == Invalido
         then do
             putStrLn " "
@@ -78,11 +80,11 @@ realizaJogada jogo@(Jogo tabuleiro controle) = do
             putStrLn " - <posição> => Desmarcar Posição Ex.:-D2, -C4 "
             putStrLn "---------------------------------------------------"
             realizaJogada jogo'
-    else if (jogoControle controle) == Vitoria
+    else if (jogoControle controle) == Vitoria -- Verifica se o controle do jogo resultante indica que o jogador venceu o jogo
         then do
             putStrLn " VOCÊ VENCEU! "
             return ()
-        else realizaJogada jogo'
+        else realizaJogada jogo' -- Senão a função realizaJogada é chamada novamente
 
 -- *************************************** Começa o jogo ***************************************
 start :: IO ()
@@ -132,6 +134,7 @@ start = do
                     -- tamTabuleiro: represneta o tamanho do tabuleiro, calculado como o produto dos valores do primeiro e segundo elemento da variável dim.
                     -- flag_invalido: um indicador booleano para sinalizar se o estado do jogo é inválido ou não.
 
+                    -- Essa expressão irá criar um novo tabuleiro com a matriz de jogo, o número de linhas e o número de colunas especificados
                     let tabuleiro = Tb.Tabuleiro { Tb.matriz = Tb.criarTabuleiro dim newSeed qtdMinas, Tb.numLinhas = fst dim, Tb.numColunas = snd dim } -- fst: extrai primeiro elemento, snd: extrai o segundo elemento
 
                     putStrLn " "
