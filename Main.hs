@@ -75,7 +75,7 @@ realizaJogada jogo@(Jogo tabuleiro ctrler ) = do
             realizaJogada jogo'
     else if (jogoControle ctrler) == Vitoria
         then do
-            putStrLn " VOCÊ VENCEU! "
+            putStrLn " Parabéns! Você venceu! "
             return ()
         else realizaJogada jogo'
 
