@@ -21,29 +21,27 @@ import qualified Data.List as DL
 import qualified Celula as Cl
 
 --  Estrutura que armazena o tabuleiro
-data Tabuleiro = Tabuleiro {matriz :: [[Cl.Celula]], numLinhas :: Int, numColunas :: Int}
+data Tabuleiro = Tabuleiro { matriz :: [[Cl.Celula]] , numLinha :: Int , numColuna :: Int }
 
 -- Consultando uma célula do tabuleiro
 getCelula :: Tabuleiro -> Int -> Int -> Cl.Celula
-getCelula (Tabuleiro matriz numLinhas numColunas) x y  
+getCelula ( Tabuleiro matriz tamLinha tamColuna ) x y 
 -- Verifica se a célula passada está dentro dos limites da matriz, senão estiver retorna uma célula vazia
-    | ((x-1) >= 0 && (x-1) < numLinhas) && ((y-1) >= 0 && (y-1) < numColunas) = (matriz!!(x-1))!!(y-1)
-    | otherwise = Cl.Vazia
+    | ((x-1) >= 0 && (x-1) < tamLinha) && ( (y-1) >= 0 && (y-1) < tamColuna) = (matriz!!(x-1))!!(y-1)
+    | otherwise    = Cl.Vazia
 
 -- Verifica se tem uma mina
 verificaMina :: Cl.Celula-> Int
 verificaMina (Cl.Celula _ _ _ True) = 1
 verificaMina _ = 0
 
-criarTabuleiro :: SR.RandomGen geraAleatorio => (Int, Int) -> geraAleatorio-> Int -> [[Cl.Celula]]
-criarTabuleiro (numLinhas, numColunas) semente numeroDeMinas = 
+criarTabuleiro :: SR.RandomGen gerarAleatorio => (Int, Int) -> gerarAleatorio-> Int -> [[Cl.Celula]]
+criarTabuleiro (tamLinha,tamColuna) semente numeroDeMinas = 
 -- nub remove os valores repetidos
 -- take pega os primeiros valores de uma lista que será gerada
 -- randomRs gera uma lista de valores infinitos dentro do intervalo de 1 a numLinhas * numColunas
-    foldr (\linha b -> (auxCriacao (take numeroDeMinas (DL.nub (SR.randomRs (1, numLinhas * numColunas) semente))) numColunas linha) : b) [] [1..numLinhas]
--- elem é usado para verificar se o elemento está em uma lista, retornando true ou false
--- Nesse caso ele verifica a lista gerada na linha acima, ou seja, verifica se o elemento está na lista que foi gerada
-        where auxCriacao listaAleatoria tamanhoLista indiceColuna = foldr (\indiceLinha a -> Cl.Celula {Cl.posicaoX = indiceLinha, Cl.posicaoY = indiceColuna, Cl.estado = Cl.Fechada, Cl.flagMina = (elem (indiceLinha + (indiceColuna - 1) * tamanhoLista) listaAleatoria)} : a) [] [1..tamanhoLista]
+    foldr (\linha b -> ( auxCriacao (take numeroDeMinas (DL.nub (SR.randomRs (1, tamLinha*tamColuna) semente) ) ) tamColuna linha) : b) [] [1..tamLinha]
+        where auxCriacao randomList tamanhoLista indiceColuna =foldr (\indiceLinha a -> Cl.Celula { Cl.posicaoX = indiceLinha, Cl.posicaoY = indiceColuna, Cl.estado = Cl.Fechada , Cl.flagMina = (elem (indiceLinha + (indiceColuna-1)*tamanhoLista) randomList) } : a) [] [1..tamanhoLista]
 
 -- Cria a String de visualização do tabuleiro
 mostrarTabuleiro :: Tabuleiro -> String
