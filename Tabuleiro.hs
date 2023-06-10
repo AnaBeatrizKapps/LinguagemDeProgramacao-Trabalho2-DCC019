@@ -45,7 +45,7 @@ criarTabuleiro (tamLinha,tamColuna) semente numeroDeMinas =
 
 -- Cria a String de visualização do tabuleiro
 mostrarTabuleiro :: Tabuleiro -> String
--- bTabuleiro@ forma de referenciar o tabuleiro (açúcar sintático)
+-- tabuleiro@ forma de referenciar o tabuleiro (açúcar sintático)
 mostrarTabuleiro tabuleiro@(Tabuleiro matriz numLinhas numColunas) =
 -- cabeçalho das colunas
     foldr (\linha b -> aux linha tabuleiro numColunas (matriz!!linha) ++ b) 
