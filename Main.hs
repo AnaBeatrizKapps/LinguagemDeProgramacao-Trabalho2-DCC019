@@ -1,4 +1,3 @@
-data Jogo = Jogo { tabuleiro :: Tb.Tabuleiro , controller :: Controller }
 -- ****************************************************
 -- Ana Beatriz Kapps dos Reis - Matricula: 201835006
 -- Rosa M. Ottoni Fernandes  - Matricula: 202035506
@@ -71,7 +70,7 @@ realizaJogada jogo@(Jogo tabuleiro ctrler ) = do
             putStrLn "---------------------------------------------------"
             putStrLn " + <posição> => Marcar Posição Ex.: +D02, +C04   "
             putStrLn "---------------------------------------------------"
-            putStrLn " - <posição> => Desmarcar Posição Ex.:-D2, -C4 "
+            putStrLn " - <posição> => Desmarcar Posição Ex.:-D02, -C40 "
             putStrLn "---------------------------------------------------"
             realizaJogada jogo'
     else if (jogoControle ctrler) == Vitoria
@@ -86,22 +85,22 @@ start = do
         putStrLn " "
         putStr " Qual o número de linhas do tabuleiro   (MAX 9) m: "
         tamanhoLinha <- getLine
-        if ((read tamanhoLinha) > 9 || (read tamanhoLinha) < 1)
+        if ( (read tamanhoLinha) > 9 || (read tamanhoLinha) < 1 )
             then do
-              putStrLn "  "
-              putStrLn " *** ERRO *** "
-              putStrLn " O número de linhas precisa estar dentro do intervalo (1 até 9). "
-              putStrLn " "
-              start
-              return ()
+            putStrLn "  "
+            putStrLn " *** ERRO *** "
+            putStrLn " O número de linhas precisa estar dentro do intervalo (1 até 9). "
+            putStrLn " "
+            start
+            return ()
         else do
             putStr " Qual o número de colunas do tabuleiro  (MAX 9) n: "
             tamanhoColuna <- getLine
-            if ((read tamanhoColuna) > 9 || (read tamanhoColuna) < 1)
+            if ( (read tamanhoColuna) > 9 || (read tamanhoColuna) < 1 )
                 then do
                 putStrLn "  "
                 putStrLn " *** ERRO *** "
-                putStrLn " O número de colunas precisa estar dentro do intervalo (1 até 9). "
+                putStrLn " O número de colunas precisa estar dentro do intervalor (1 até 9). "
                 putStrLn " "
                 start
                 return ()            else do
