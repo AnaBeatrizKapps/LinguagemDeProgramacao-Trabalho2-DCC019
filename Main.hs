@@ -51,33 +51,40 @@ trataComando _ (Jogo tabuleiro controle@(Controle a b c d e)) =
 realizaJogada :: Jogo -> IO ()
 realizaJogada jogo@(Jogo tabuleiro ctrler ) = do
     let tabuleiroAtual = Tb.mostrarTabuleiro tabuleiro
-    putStrLn " "
-    putStrLn "  *** TABULEIRO *** "
-    putStrLn " "
-    putStrLn tabuleiroAtual
-    putStr " Informe seu comando: "
-    command <- getLine
-    let jogo'@(Jogo tabuleiro' ctrler ) = trataComando command jogo
-    if (jogoControle ctrler) == Invalido
+    let gameOver = Tb.tabuleiroPossuiExplodida tabuleiro
+    if gameOver == True
         then do
+            let tabuleiroAberto = Tb.exibirTabuleiroAberto tabuleiro
+            putStrLn tabuleiroAberto
+            error " Game Over! Você foi explodido! "
+        else do
             putStrLn " "
+            putStrLn "  *** TABULEIRO *** "
             putStrLn " "
-            putStrLn "  COMANDO INVÁLIDO !!!  "
-            putStrLn " "
-            putStrLn " ********************   MENU   ******************** "
-            putStrLn "---------------------------------------------------"
-            putStrLn " _ <posição> => Abrir Posição Ex.: A01, D04, B03 "
-            putStrLn "---------------------------------------------------"
-            putStrLn " + <posição> => Marcar Posição Ex.: +D02, +C04   "
-            putStrLn "---------------------------------------------------"
-            putStrLn " - <posição> => Desmarcar Posição Ex.:-D02, -C40 "
-            putStrLn "---------------------------------------------------"
-            realizaJogada jogo'
-    else if (jogoControle ctrler) == Vitoria
-        then do
-            putStrLn " Parabéns! Você venceu! "
-            return ()
-        else realizaJogada jogo'
+            putStrLn tabuleiroAtual
+            putStr " Informe seu comando: "
+            command <- getLine
+            let jogo'@(Jogo tabuleiro' ctrler ) = trataComando command jogo
+            if (jogoControle ctrler) == Invalido
+                then do
+                    putStrLn " "
+                    putStrLn " "
+                    putStrLn "  COMANDO INVÁLIDO !!!  "
+                    putStrLn " "
+                    putStrLn " ********************   MENU   ******************** "
+                    putStrLn "---------------------------------------------------"
+                    putStrLn " _ <posição> => Abrir Posição Ex.: A01, D04, B03 "
+                    putStrLn "---------------------------------------------------"
+                    putStrLn " + <posição> => Marcar Posição Ex.: +D02, +C04   "
+                    putStrLn "---------------------------------------------------"
+                    putStrLn " - <posição> => Desmarcar Posição Ex.:-D02, -C40 "
+                    putStrLn "---------------------------------------------------"
+                    realizaJogada jogo'
+            else if (jogoControle ctrler) == Vitoria
+                then do
+                    putStrLn " Parabéns! Você venceu! "
+                    return ()
+                else realizaJogada jogo'
 
 -- *************************************** Começa o jogo ***************************************
 start :: IO ()

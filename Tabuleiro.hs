@@ -13,6 +13,8 @@ module Tabuleiro ( Tabuleiro(..)
 , mostrarTabuleiro
 , modificarLinha
 , modificarMatriz
+, tabuleiroPossuiExplodida
+, exibirTabuleiroAberto
 ) where
 
 import qualified System.Random as SR
@@ -43,6 +45,12 @@ criarTabuleiro (tamLinha,tamColuna) semente numeroDeMinas =
     foldr (\linha b -> ( auxCriacao (take numeroDeMinas (DL.nub (SR.randomRs (1, tamLinha*tamColuna) semente) ) ) tamColuna linha) : b) [] [1..tamLinha]
         where auxCriacao randomList tamanhoLista indiceColuna =foldr (\indiceLinha a -> Cl.Celula { Cl.posicaoX = indiceLinha, Cl.posicaoY = indiceColuna, Cl.estado = Cl.Fechada , Cl.flagMina = (elem (indiceLinha + (indiceColuna-1)*tamanhoLista) randomList) } : a) [] [1..tamanhoLista]
 
+-- Verifica se no tabuleiro há uma célula com o estado Explodida, essa função retorna True ou False
+tabuleiroPossuiExplodida :: Tabuleiro -> Bool
+tabuleiroPossuiExplodida (Tabuleiro matriz _ _) = any isExplodida (concat matriz)
+  where
+    isExplodida (Cl.Celula _ _ estado _) = estado == Cl.Explodida
+
 -- Cria a String de visualização do tabuleiro
 mostrarTabuleiro :: Tabuleiro -> String
 -- tabuleiro@ forma de referenciar o tabuleiro (açúcar sintático)
@@ -68,6 +76,31 @@ quantidadeMinas :: Tabuleiro -> Cl.Celula -> Int
 -- Verifica os quatro vizinhos e para cada mina encontrada soma 1 na quantidade
 quantidadeMinas tabuleiro (Cl.Celula linha coluna _ _ ) = verificaMina (getCelula tabuleiro (linha - 1) coluna) + verificaMina (getCelula tabuleiro (linha + 1) coluna) + verificaMina (getCelula tabuleiro linha (coluna - 1)) + verificaMina (getCelula tabuleiro linha (coluna + 1))
 
+-- Funções para exibir tabuleiro completo
+abrirTodasAsCelulas :: Tabuleiro -> Tabuleiro
+abrirTodasAsCelulas tabuleiro@(Tabuleiro matriz numLinhas numColunas) =
+  let abrirCelula celula@(Cl.Celula linha coluna estado flagMina) =
+        if flagMina
+          then Cl.Celula linha coluna Cl.Explodida flagMina
+          else Cl.Celula linha coluna Cl.Aberta flagMina
+      matrizAberta = map (map abrirCelula) matriz
+  in Tabuleiro matrizAberta numLinhas numColunas
+
+exibirTabuleiroAberto :: Tabuleiro -> String
+exibirTabuleiroAberto tabuleiro =
+  let tabuleiroAberto = abrirTodasAsCelulas tabuleiro
+      celulas = concat (matriz tabuleiroAberto)
+      mostrarCelula' celula =
+        case Cl.estado celula of
+          Cl.Aberta ->
+            if Cl.flagMina celula
+              then " X"
+              else " " ++ show (quantidadeMinas tabuleiroAberto celula)
+          Cl.Marcada -> " B"
+          Cl.Explodida -> " X"
+          _ -> " *"
+  in mostrarTabuleiro tabuleiroAberto
+
 -- 
 mostrarCelula :: Tabuleiro -> Cl.Celula -> String
 -- Células fechadas mostram *
@@ -76,3 +109,5 @@ mostrarCelula _ (Cl.Celula _ _ Cl.Fechada _) = " *"
 mostrarCelula tabuleiro celula@(Cl.Celula _ _ Cl.Aberta _) = ([' ', (DC.intToDigit (quantidadeMinas tabuleiro celula))] :: String ) 
 -- Células marcadas mostram o símbolo B
 mostrarCelula _ (Cl.Celula _ _ Cl.Marcada _) = " B"
+-- Células com a mina mostram o símbolo M
+mostrarCelula _ (Cl.Celula _ _ Cl.Explodida _) = " M"
