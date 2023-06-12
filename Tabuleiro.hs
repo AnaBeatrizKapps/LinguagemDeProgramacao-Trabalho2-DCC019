@@ -21,29 +21,32 @@ import qualified System.Random as SR
 import qualified Data.Char as DC
 import qualified Data.List as DL
 import qualified Celula as Cl
+import qualified Debug.Trace as DT
 
 --  Estrutura que armazena o tabuleiro
-data Tabuleiro = Tabuleiro { matriz :: [[Cl.Celula]] , numLinha :: Int , numColuna :: Int }
+data Tabuleiro = Tabuleiro {matriz :: [[Cl.Celula]], numLinhas :: Int, numColunas :: Int}
 
 -- Consultando uma célula do tabuleiro
 getCelula :: Tabuleiro -> Int -> Int -> Cl.Celula
-getCelula ( Tabuleiro matriz tamLinha tamColuna ) x y 
+getCelula (Tabuleiro matriz numLinhas numColunas) x y  
 -- Verifica se a célula passada está dentro dos limites da matriz, senão estiver retorna uma célula vazia
-    | ((x-1) >= 0 && (x-1) < tamLinha) && ( (y-1) >= 0 && (y-1) < tamColuna) = (matriz!!(x-1))!!(y-1)
-    | otherwise    = Cl.Vazia
+    | ((x >= 0) && (x < numLinhas)) && ((y >= 0) && (y < numColunas)) = (matriz!!(x))!!(y)
+    | otherwise = Cl.Vazia
 
 -- Verifica se tem uma mina
 verificaMina :: Cl.Celula-> Int
 verificaMina (Cl.Celula _ _ _ True) = 1
 verificaMina _ = 0
 
-criarTabuleiro :: SR.RandomGen gerarAleatorio => (Int, Int) -> gerarAleatorio-> Int -> [[Cl.Celula]]
-criarTabuleiro (tamLinha,tamColuna) semente numeroDeMinas = 
+criarTabuleiro :: SR.RandomGen geraAleatorio => (Int, Int) -> geraAleatorio-> Int -> [[Cl.Celula]]
+criarTabuleiro (numLinhas, numColunas) semente numeroDeMinas = 
 -- nub remove os valores repetidos
 -- take pega os primeiros valores de uma lista que será gerada
 -- randomRs gera uma lista de valores infinitos dentro do intervalo de 1 a numLinhas * numColunas
-    foldr (\linha b -> ( auxCriacao (take numeroDeMinas (DL.nub (SR.randomRs (1, tamLinha*tamColuna) semente) ) ) tamColuna linha) : b) [] [1..tamLinha]
-        where auxCriacao randomList tamanhoLista indiceColuna =foldr (\indiceLinha a -> Cl.Celula { Cl.posicaoX = indiceLinha, Cl.posicaoY = indiceColuna, Cl.estado = Cl.Fechada , Cl.flagMina = (elem (indiceLinha + (indiceColuna-1)*tamanhoLista) randomList) } : a) [] [1..tamanhoLista]
+    foldr (\linha b -> (auxCriacao (take numeroDeMinas (DL.nub (SR.randomRs (1, numLinhas * numColunas) semente))) numColunas linha) : b) [] [1..numLinhas]
+-- elem é usado para verificar se o elemento está em uma lista, retornando true ou false
+-- Nesse caso ele verifica a lista gerada na linha acima, ou seja, verifica se o elemento está na lista que foi gerada
+        where auxCriacao listaAleatoria tamanhoLista indiceColuna = foldr (\indiceLinha a -> Cl.Celula {Cl.posicaoX = indiceColuna - 1, Cl.posicaoY = indiceLinha - 1, Cl.estado = Cl.Fechada, Cl.flagMina = (elem (indiceLinha + (indiceColuna - 1) * tamanhoLista) listaAleatoria)} : a) [] [1..tamanhoLista]
 
 -- Verifica se no tabuleiro há uma célula com o estado Explodida, essa função retorna True ou False
 tabuleiroPossuiExplodida :: Tabuleiro -> Bool
@@ -53,11 +56,11 @@ tabuleiroPossuiExplodida (Tabuleiro matriz _ _) = any isExplodida (concat matriz
 
 -- Cria a String de visualização do tabuleiro
 mostrarTabuleiro :: Tabuleiro -> String
--- tabuleiro@ forma de referenciar o tabuleiro (açúcar sintático)
+-- bTabuleiro@ forma de referenciar o tabuleiro (açúcar sintático)
 mostrarTabuleiro tabuleiro@(Tabuleiro matriz numLinhas numColunas) =
 -- cabeçalho das colunas
     foldr (\linha b -> aux linha tabuleiro numColunas (matriz!!linha) ++ b) 
-        ("  " ++ ( DL.intersperse ' '  (take numColunas ['A'..'Z'])) ++ " \n") [numLinhas - 1, (numLinhas - 2)..0]
+        ("  " ++ ( DL.intersperse ' '  (take numColunas ['A'..'I'])) ++ " \n") [numLinhas - 1, (numLinhas - 2)..0]
         -- cabeçalho das linhas e do restante do tabuleiro
             where aux indexLinha tabuleiro tamanhoLista lin = [DC.intToDigit (indexLinha + 1)] ++ foldr (\col a -> (mostrarCelula tabuleiro (lin!!col)) ++ a) " \n" [0..tamanhoLista - 1]
 
@@ -69,7 +72,7 @@ modificarLinha comando linha coluna = take coluna linha ++ [(Cl.modificarCelula 
 -- Altera a linha do elemento a ser modificado
 modificarMatriz :: Char -> [[Cl.Celula]] -> Int -> Int -> [[Cl.Celula]]
 -- Take pega as linhas estão antes da linha do elemento a ser modificado e concatena com a linha modificada e as linhas que estão depois dela na matriz (drop)
-modificarMatriz comando matriz linha coluna = take (linha - 1) matriz ++ [ (modificarLinha comando (matriz!!(linha - 1)) coluna)] ++ drop linha matriz
+modificarMatriz comando matriz linha coluna = take linha matriz ++ [(modificarLinha comando (matriz!!linha) coluna)] ++ drop (linha + 1) matriz
 
 -- Calcula a quantidade de minas vizinhas a uma célula
 quantidadeMinas :: Tabuleiro -> Cl.Celula -> Int
@@ -89,24 +92,13 @@ abrirTodasAsCelulas tabuleiro@(Tabuleiro matriz numLinhas numColunas) =
 exibirTabuleiroAberto :: Tabuleiro -> String
 exibirTabuleiroAberto tabuleiro =
   let tabuleiroAberto = abrirTodasAsCelulas tabuleiro
-      celulas = concat (matriz tabuleiroAberto)
-      mostrarCelula' celula =
-        case Cl.estado celula of
-          Cl.Aberta ->
-            if Cl.flagMina celula
-              then " X"
-              else " " ++ show (quantidadeMinas tabuleiroAberto celula)
-          Cl.Marcada -> " B"
-          Cl.Explodida -> " X"
-          _ -> " *"
   in mostrarTabuleiro tabuleiroAberto
 
--- 
 mostrarCelula :: Tabuleiro -> Cl.Celula -> String
 -- Células fechadas mostram *
 mostrarCelula _ (Cl.Celula _ _ Cl.Fechada _) = " *"
 -- Células abertas número de bombas vizinhas
-mostrarCelula tabuleiro celula@(Cl.Celula _ _ Cl.Aberta _) = ([' ', (DC.intToDigit (quantidadeMinas tabuleiro celula))] :: String ) 
+mostrarCelula tabuleiro celula@(Cl.Celula x y Cl.Aberta _) = ([' ', (DC.intToDigit (quantidadeMinas tabuleiro celula))] :: String)
 -- Células marcadas mostram o símbolo B
 mostrarCelula _ (Cl.Celula _ _ Cl.Marcada _) = " B"
 -- Células com a mina mostram o símbolo M

@@ -10,53 +10,59 @@ import System.Random (newStdGen)
 import System.IO
 
 -- Estados do jogo
-data EstadoJogo  = Neutro | Invalido | Vitoria  deriving( Ord, Eq, Show )
+data EstadoJogo  = Neutro | Invalido | Vitoria  deriving(Ord, Eq, Show)
 
 -- Estrutura que controla o jogo
-data Controle = Controle { minas :: Int , marcados :: Int , abertos :: Int , tamTabuleiro :: Int , flag_invalido :: Bool }
+data Controle = Controle {numMinas :: Int, numMarcados :: Int, numAbertos :: Int, tamTabuleiro :: Int, flagInvalido :: Bool}
 
 -- Estrutura que armazena o jogo
-data Jogo = Jogo { tabuleiro :: Tb.Tabuleiro , controller :: Controle }
+data Jogo = Jogo {tabuleiro :: Tb.Tabuleiro, controle :: Controle}
 
--- converte uma string contendo 2 caracteres em um número inteiro
-numberToInt :: String -> Int
-numberToInt [a,b]
-    | (DC.digitToInt a) >= 0 && (DC.digitToInt a) < 10 && (DC.digitToInt b) >= 0 && (DC.digitToInt b) < 10 = (DC.digitToInt a)*10 + (DC.digitToInt b)
-    | otherwise = error "Entrada Inválida! <numberToInt>"
-numberToInt theError =  error "Entrada Inválida!"
+linhaParaInt :: String -> Int
+linhaParaInt [a]
+    | (DC.digitToInt a) > 0 && (DC.digitToInt a) < 10 = DC.digitToInt a
+    | otherwise = error "Entrada Inválida! <linhaParaInt>"
+linhaParaInt theError =  error "Entrada Inválida!"
 
 -- Verifica os estados do jogo
 jogoControle :: Controle -> EstadoJogo
 jogoControle (Controle numMinas numMarcados numAbertos tamTabuleiro flagInvalido)
-    | tamTabuleiro - numAbertos == numMinas = Vitoria
+    | (tamTabuleiro - numAbertos) == numMinas = Vitoria
     | flagInvalido = Invalido
     | otherwise = Neutro
 
 -- Entrada
 entrada :: Char -> Int -> Int -> Tb.Tabuleiro -> Controle -> Jogo
-entrada '+' linha coluna (Tb.Tabuleiro matriz tamanhoLinha tamanhoColuna) (Controle a m b c d) = (Jogo (Tb.Tabuleiro (Tb.modificarMatriz '+' matriz linha coluna ) tamanhoLinha tamanhoColuna) (Controle a (m+1) b c d) )
-entrada '-' linha coluna (Tb.Tabuleiro matriz tamanhoLinha tamanhoColuna) (Controle a m b c d) = (Jogo (Tb.Tabuleiro (Tb.modificarMatriz '-' matriz linha coluna ) tamanhoLinha tamanhoColuna) (Controle a (m-1) b c d) )
-entrada '_' linha coluna (Tb.Tabuleiro matriz tamanhoLinha tamanhoColuna) (Controle a b o c d) = (Jogo (Tb.Tabuleiro (Tb.modificarMatriz '_' matriz linha coluna ) tamanhoLinha tamanhoColuna) (Controle a b (o+1) c d) )
-entrada  _  _ _  b c = error "Entrada Inválida!"
+entrada '+' linha coluna (Tb.Tabuleiro matriz tamanhoLinha tamanhoColuna) (Controle mi ma a t f) = (Jogo (Tb.Tabuleiro (Tb.modificarMatriz '+' matriz linha coluna) tamanhoLinha tamanhoColuna) (Controle mi (ma + 1) a t f))
+entrada '-' linha coluna (Tb.Tabuleiro matriz tamanhoLinha tamanhoColuna) (Controle mi ma a t f) = (Jogo (Tb.Tabuleiro (Tb.modificarMatriz '-' matriz linha coluna) tamanhoLinha tamanhoColuna) (Controle mi (ma - 1) a t f))
+entrada '_' linha coluna (Tb.Tabuleiro matriz tamanhoLinha tamanhoColuna) (Controle mi ma a t f) = (Jogo (Tb.Tabuleiro (Tb.modificarMatriz '_' matriz linha coluna) tamanhoLinha tamanhoColuna) (Controle mi ma (a + 1) t f))
+-- Quando não vem nada da entrada só o tabuleiro e o controle
+entrada  _ _ _ t c = error "Entrada Inválida!"
 
 -- Inverte a entrada do teclado de 'coluna, linha' para 'linha, coluna'
 trataComando :: String -> Jogo -> Jogo
-trataComando (cmd:col:lin) (Jogo tabuleiro controle@(Controle a b c d e))
-    | (cmd == '+' || cmd == '-' || cmd == '_') && DC.isUpper col && (numberToInt lin < 100) =
-        entrada cmd (numberToInt lin) (DC.ord col - DC.ord 'A') tabuleiro controle
-    | otherwise = Jogo tabuleiro (Controle a b c d True)
-trataComando _ (Jogo tabuleiro controle@(Controle a b c d e)) =
-    Jogo tabuleiro (Controle a b c d True)
+-- Casos em que os comandos são de marcação
+trataComando (cmd:col:lin) (Jogo tabuleiro controle@(Controle mi ma a t f))
+    | (cmd == '+' || cmd == '-') && DC.isUpper col && ((linhaParaInt lin) < 10) =
+        entrada cmd ((linhaParaInt lin) - 1) (DC.ord col - DC.ord 'A') tabuleiro controle
+-- Caso de abertura de célula
+    | (DC.isUpper cmd) && ((DC.digitToInt col) < 10) = entrada '_' ((DC.digitToInt col) - 1) (DC.ord cmd - DC.ord 'A') tabuleiro controle
+-- Caso onde dá inválido
+    | otherwise = Jogo tabuleiro (Controle mi ma a t True)
+-- Inválido quando não passa nenhuma string
+trataComando _ (Jogo tabuleiro controle@(Controle mi ma a t f)) =
+    Jogo tabuleiro (Controle mi ma a t True)
 
 realizaJogada :: Jogo -> IO ()
-realizaJogada jogo@(Jogo tabuleiro ctrler ) = do
+realizaJogada jogo@(Jogo tabuleiro ctrler) = do
     let tabuleiroAtual = Tb.mostrarTabuleiro tabuleiro
     let gameOver = Tb.tabuleiroPossuiExplodida tabuleiro
     if gameOver == True
         then do
             let tabuleiroAberto = Tb.exibirTabuleiroAberto tabuleiro
             putStrLn tabuleiroAberto
-            error " Game Over! Você foi explodido! "
+            putStrLn " Game Over! Você foi explodido! "
+            return ()
         else do
             putStrLn " "
             putStrLn "  *** TABULEIRO *** "
@@ -73,11 +79,11 @@ realizaJogada jogo@(Jogo tabuleiro ctrler ) = do
                     putStrLn " "
                     putStrLn " ********************   MENU   ******************** "
                     putStrLn "---------------------------------------------------"
-                    putStrLn " _ <posição> => Abrir Posição Ex.: A01, D04, B03 "
+                    putStrLn " <posição> => Abrir Posição Ex.: A1, D4, B3 "
                     putStrLn "---------------------------------------------------"
-                    putStrLn " + <posição> => Marcar Posição Ex.: +D02, +C04   "
+                    putStrLn " + <posição> => Marcar Posição Ex.: +D2, +C4   "
                     putStrLn "---------------------------------------------------"
-                    putStrLn " - <posição> => Desmarcar Posição Ex.:-D02, -C40 "
+                    putStrLn " - <posição> => Desmarcar Posição Ex.:-D2, -C4 "
                     putStrLn "---------------------------------------------------"
                     realizaJogada jogo'
             else if (jogoControle ctrler) == Vitoria
@@ -90,32 +96,34 @@ realizaJogada jogo@(Jogo tabuleiro ctrler ) = do
 start :: IO ()
 start = do
         putStrLn " "
-        putStr " Qual o número de linhas do tabuleiro   (MAX 9) m: "
-        tamanhoLinha <- getLine
-        if ( (read tamanhoLinha) > 9 || (read tamanhoLinha) < 1 )
+        putStr " Qual o número de linhas você deseja no tabuleiro (MAX 9): "
+        numLinhas <- getLine
+        if ((read numLinhas) > 9 || (read numLinhas) < 1)
             then do
-            putStrLn "  "
-            putStrLn " *** ERRO *** "
-            putStrLn " O número de linhas precisa estar dentro do intervalo (1 até 9). "
-            putStrLn " "
-            start
-            return ()
+              putStrLn "  "
+              putStrLn " *** ERRO *** "
+              putStrLn " O número de linhas precisa estar dentro do intervalo (1 até 9). "
+              putStrLn " "
+              start
+              return ()
         else do
-            putStr " Qual o número de colunas do tabuleiro  (MAX 9) n: "
-            tamanhoColuna <- getLine
-            if ( (read tamanhoColuna) > 9 || (read tamanhoColuna) < 1 )
+            putStr " Qual o número de colunas você deseja no tabuleiro  (MAX 9): "
+            numColunas <- getLine
+            if ((read numColunas) > 9 || (read numColunas) < 1)
                 then do
                 putStrLn "  "
                 putStrLn " *** ERRO *** "
-                putStrLn " O número de colunas precisa estar dentro do intervalor (1 até 9). "
+                putStrLn " O número de colunas precisa estar dentro do intervalo (1 até 9). "
                 putStrLn " "
                 start
                 return ()            else do
-                putStr " Qual o número de minas do tabuleiro (MAX ((linhas * colunas)/2)): "
+                putStr " Qual o número de minas você deseja no tabuleiro (MAX ((linhas * colunas)/2)): "
                 qtdMinas <- readLn
-                let {dim = (read tamanhoLinha, read tamanhoColuna)} -- read: converte valores de string para númerico
-                let {maxMinas = (fst dim)*(div (snd dim) 2) } -- calcula o máximo de minas
-                if ( qtdMinas > maxMinas || qtdMinas < 1 )
+                -- read: converte valores de string para númerico
+                let {dim = (read numLinhas, read numColunas)} 
+                -- calcula o máximo de minas
+                let {maxMinas = ((fst dim) * (snd dim)) `div` 2} 
+                if (qtdMinas > maxMinas || qtdMinas < 0)
                     then do
                     putStrLn "  "
                     putStrLn " *** ERRO *** "
@@ -125,30 +133,25 @@ start = do
                     start
                     return ()
                 else do
-                    newSeed <- newStdGen -- cria uma nova semente aleatória utilizando a função newStdGen do módulo System.Random
-                    let controller = Controle { minas = qtdMinas , marcados = 0 , abertos = 0 , tamTabuleiro = (fst dim)*(snd dim) , flag_invalido = False}
-
-                    -- minas: representa a quantidade de minas no jogo
-                    -- marcados: representa o número de células marcadas no jogo.
-                    -- abertos: representa o número de células abertas no jogo.
-                    -- tamTabuleiro: represneta o tamanho do tabuleiro, calculado como o produto dos valores do primeiro e segundo elemento da variável dim.
-                    -- flag_invalido: um indicador booleano para sinalizar se o estado do jogo é inválido ou não.
-
-                    let tabuleiro = Tb.Tabuleiro { Tb.matriz = Tb.criarTabuleiro dim newSeed qtdMinas, Tb.numLinha = fst dim, Tb.numColuna = snd dim } -- fst: extrai primeiro elemento, snd: extrai o segundo elemento
+                    -- cria uma nova semente aleatória utilizando a função newStdGen do módulo System.Random
+                    newSeed <- newStdGen 
+                    -- fst: extrai primeiro elemento, snd: extrai o segundo elemento
+                    let controle = Controle {numMinas = qtdMinas, numMarcados = 0, numAbertos = 0, tamTabuleiro = (fst dim)*(snd dim), flagInvalido = False}
+                    let tabuleiro = Tb.Tabuleiro {Tb.matriz = Tb.criarTabuleiro dim newSeed qtdMinas, Tb.numLinhas = fst dim, Tb.numColunas = snd dim} 
 
                     putStrLn " "
                     putStrLn " "
                     putStrLn " ********************   MENU   ******************** "
                     putStrLn "---------------------------------------------------"
-                    putStrLn " _ <posição> => Abrir Posição Ex.: A01, D04, B03 "
+                    putStrLn " <posição> => Abrir Posição Ex.: A1, D4, B3 "
                     putStrLn "---------------------------------------------------"
-                    putStrLn " + <posição> => Marcar Posição Ex.: +D02, +C04   "
+                    putStrLn " + <posição> => Marcar Posição Ex.: +D2, +C4   "
                     putStrLn "---------------------------------------------------"
-                    putStrLn " - <posição> => Desmarcar Posição Ex.:-D02, -C04 "
+                    putStrLn " - <posição> => Desmarcar Posição Ex.:-D2, -C4 "
                     putStrLn "---------------------------------------------------"
                     putStrLn " "
                     putStrLn " "
-                    realizaJogada (Jogo tabuleiro controller)
+                    realizaJogada (Jogo tabuleiro controle)
                     return ()
 
 main = do 
